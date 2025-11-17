@@ -7,6 +7,9 @@ export default function FlappyBird() {
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameOver'>('menu')
   const [score, setScore] = useState(0)
   const [bestScore, setBestScore] = useState(0)
+  const [menuOpacity, setMenuOpacity] = useState(1)
+  const [countdown, setCountdown] = useState<number | null>(null)
+  const [isFirstTime, setIsFirstTime] = useState(true)
   const gameStateRef = useRef({
     birdY: 200,
     birdVelocity: 0,
@@ -73,11 +76,20 @@ export default function FlappyBird() {
     }
 
     const animate = () => {
+      // Aplicar blur al fondo solo en el menú
+      if (gameState === 'menu') {
+        ctx.filter = 'blur(8px)'
+      } else {
+        ctx.filter = 'none'
+      }
+      
       ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height)
+      ctx.filter = 'none' // Resetear el filtro después de dibujar el fondo
+      
       ctx.fillStyle = 'rgba(135, 206, 235, 0.3)'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      if (gameState === 'playing') {
+      if (gameState === 'playing' && countdown === null) {
         gameStateRef.current.birdVelocity += GRAVITY
         gameStateRef.current.birdY += gameStateRef.current.birdVelocity
 
@@ -128,28 +140,95 @@ export default function FlappyBird() {
         }
       }
 
-      ctx.save()
-      ctx.drawImage(birdImage, BIRD_X, gameStateRef.current.birdY, BIRD_SIZE, BIRD_SIZE)
-      ctx.restore()
-
-      ctx.fillStyle = '#000'
-      ctx.font = 'bold 48px Arial'
-      ctx.textAlign = 'center'
-      ctx.fillText(`${gameStateRef.current.score}`, canvas.width / 2, 80)
-
-      if (gameState === 'menu') {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-        ctx.fillRect(50, 150, 300, 200)
+      // Solo mostrar el score cuando está jugando y no hay countdown
+      if (gameState === 'playing' && countdown === null) {
         ctx.fillStyle = '#000'
-        ctx.font = 'bold 40px Arial'
+        ctx.font = 'bold 48px Arial'
         ctx.textAlign = 'center'
-        ctx.fillText('Flappy Bird', canvas.width / 2, 210)
-        ctx.font = '18px Arial'
-        ctx.fillText('Tap to play', canvas.width / 2, 280)
-        if (bestScore > 0) {
-          ctx.font = '16px Arial'
-          ctx.fillText(`Best: ${bestScore}`, canvas.width / 2, 320)
+        ctx.fillText(`${gameStateRef.current.score}`, canvas.width / 2, 80)
+      }
+
+      if (gameState === 'menu' || menuOpacity > 0) {
+        ctx.save()
+        ctx.globalAlpha = menuOpacity
+        
+        // Título "Flappy Alcar" - más arriba
+        ctx.fillStyle = '#fff'
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 5
+        ctx.font = 'bold 64px Arial'
+        ctx.textAlign = 'center'
+        ctx.strokeText('Flappy Alcar', canvas.width / 2, 120)
+        ctx.fillText('Flappy Alcar', canvas.width / 2, 120)
+
+        // Dibujar el pájaro más grande y centrado en la portada
+        const menuBirdSize = 140
+        const menuBirdX = canvas.width / 2 - menuBirdSize / 2
+        const menuBirdY = canvas.height / 2 - 60
+        
+        if (birdImage) {
+          // Agregar sombra al pájaro para más profundidad
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
+          ctx.shadowBlur = 15
+          ctx.shadowOffsetX = 5
+          ctx.shadowOffsetY = 5
+          ctx.drawImage(birdImage, menuBirdX, menuBirdY, menuBirdSize, menuBirdSize)
+          ctx.shadowBlur = 0
         }
+
+        // Texto debajo del pájaro "podrás esquivar a los Somoza?"
+        ctx.fillStyle = '#fff'
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 3
+        ctx.font = 'bold 22px Arial'
+        ctx.textAlign = 'center'
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'
+        ctx.shadowBlur = 10
+        ctx.shadowOffsetX = 2
+        ctx.shadowOffsetY = 2
+        ctx.strokeText('¿Podrás esquivar a los Somoza?', canvas.width / 2, menuBirdY + menuBirdSize + 50)
+        ctx.fillText('¿Podrás esquivar a los Somoza?', canvas.width / 2, menuBirdY + menuBirdSize + 50)
+        ctx.shadowBlur = 0 // Resetear sombra
+
+        // Subtítulo "Tap to play" - más abajo
+        ctx.fillStyle = '#fff'
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 2
+        ctx.font = 'bold 26px Arial'
+        ctx.strokeText('Tap to play', canvas.width / 2, 520)
+        ctx.fillText('Tap to play', canvas.width / 2, 520)
+
+        // Mejor puntaje si existe
+        if (bestScore > 0) {
+          ctx.fillStyle = '#fff'
+          ctx.strokeStyle = '#000'
+          ctx.lineWidth = 2
+          ctx.font = 'bold 20px Arial'
+          ctx.strokeText(`Best: ${bestScore}`, canvas.width / 2, 560)
+          ctx.fillText(`Best: ${bestScore}`, canvas.width / 2, 560)
+        }
+        
+        ctx.restore()
+      } else {
+        // Dibujar el pájaro normal cuando está jugando, en countdown, o en game over
+        if (birdImage) {
+          ctx.save()
+          ctx.drawImage(birdImage, BIRD_X, gameStateRef.current.birdY, BIRD_SIZE, BIRD_SIZE)
+          ctx.restore()
+        }
+      }
+
+      // Dibujar countdown si está activo
+      if (countdown !== null) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = '#fff'
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 6
+        ctx.font = 'bold 120px Arial'
+        ctx.textAlign = 'center'
+        ctx.strokeText(countdown.toString(), canvas.width / 2, canvas.height / 2 + 40)
+        ctx.fillText(countdown.toString(), canvas.width / 2, canvas.height / 2 + 40)
       }
 
       if (gameState === 'gameOver') {
@@ -174,7 +253,7 @@ export default function FlappyBird() {
     return () => {
       cancelAnimationFrame(animationId)
     }
-  }, [gameState, birdImage, pipeImage, backgroundImage, bestScore])
+  }, [gameState, birdImage, pipeImage, backgroundImage, bestScore, menuOpacity, countdown])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -182,18 +261,45 @@ export default function FlappyBird() {
 
     const handleFlap = () => {
       if (gameState === 'menu') {
-        setGameState('playing')
-        gameStateRef.current.isPlaying = true
-        gameStateRef.current.birdVelocity = 0
+        // Animación de fade out suave antes de iniciar el juego
+        const fadeDuration = 400 // 400ms para la transición
+        const startTime = Date.now()
+        const startOpacity = menuOpacity
+        
+        const fadeOut = () => {
+          const elapsed = Date.now() - startTime
+          const progress = Math.min(elapsed / fadeDuration, 1)
+          const newOpacity = startOpacity * (1 - progress)
+          
+          setMenuOpacity(newOpacity)
+          
+          if (progress < 1) {
+            requestAnimationFrame(fadeOut)
+          } else {
+            setMenuOpacity(0)
+            // Si es la primera vez, iniciar countdown
+            if (isFirstTime) {
+              setCountdown(3)
+            } else {
+              // Si no es la primera vez, iniciar el juego directamente
+              setGameState('playing')
+              gameStateRef.current.isPlaying = true
+              gameStateRef.current.birdVelocity = 0
+            }
+          }
+        }
+        fadeOut()
       } else if (gameState === 'playing') {
         gameStateRef.current.birdVelocity = -9
       } else if (gameState === 'gameOver') {
+        // Reiniciar el juego directamente sin volver al menú
         gameStateRef.current.birdY = 200
         gameStateRef.current.birdVelocity = 0
         gameStateRef.current.pipes = []
         gameStateRef.current.score = 0
         setScore(0)
-        setGameState('menu')
+        setGameState('playing')
+        gameStateRef.current.isPlaying = true
       }
     }
 
@@ -213,7 +319,29 @@ export default function FlappyBird() {
       window.removeEventListener('keydown', handleKeyDown)
       canvas.removeEventListener('touchstart', handleFlap)
     }
-  }, [gameState])
+  }, [gameState, menuOpacity, isFirstTime])
+
+  // Manejar el countdown
+  useEffect(() => {
+    if (countdown === null) return
+
+    if (countdown === 0) {
+      // Cuando el countdown llega a 0, iniciar el juego
+      setCountdown(null)
+      setIsFirstTime(false)
+      setGameState('playing')
+      gameStateRef.current.isPlaying = true
+      gameStateRef.current.birdVelocity = 0
+      return
+    }
+
+    // Esperar 1 segundo antes de reducir el countdown
+    const timer = setTimeout(() => {
+      setCountdown(countdown - 1)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [countdown])
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-gray-900">
