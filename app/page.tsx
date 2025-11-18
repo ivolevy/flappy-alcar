@@ -21,6 +21,7 @@ export default function FlappyBird() {
   const [birdImage, setBirdImage] = useState<HTMLImageElement | null>(null)
   const [pipeImage, setPipeImage] = useState<HTMLImageElement | null>(null)
   const [backgroundImage, setBackgroundImage] = useState<HTMLImageElement | null>(null)
+  const [evilSomozaImage, setEvilSomozaImage] = useState<HTMLImageElement | null>(null)
 
   useEffect(() => {
     const birdImg = new Image()
@@ -39,6 +40,10 @@ export default function FlappyBird() {
     bgImg.crossOrigin = 'anonymous'
     bgImg.src = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1693788394090-rHm5nTXC09cix6HesGvQZzbqObvV3J.jpeg'
     bgImg.onload = () => setBackgroundImage(bgImg)
+
+    const evilImg = new Image()
+    evilImg.src = '/WhatsApp_Image_2025-11-18_at_17.30.22-removebg-preview-2.png'
+    evilImg.onload = () => setEvilSomozaImage(evilImg)
 
     let lastBestScore = localStorage.getItem('flappyBestScore')
     if (lastBestScore) setBestScore(parseInt(lastBestScore))
@@ -232,17 +237,41 @@ export default function FlappyBird() {
       }
 
       if (gameState === 'gameOver') {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        ctx.fillStyle = 'rgba(139, 0, 0, 0.9)'
         ctx.fillRect(0, 0, canvas.width, canvas.height)
-        ctx.fillStyle = '#fff'
-        ctx.font = 'bold 40px Arial'
+        
+        // Dibujar la imagen de Evil Somoza
+        if (evilSomozaImage) {
+          const imageSize = 250
+          const imageX = canvas.width / 2 - imageSize / 2
+          const imageY = 100
+          ctx.drawImage(evilSomozaImage, imageX, imageY, imageSize, imageSize)
+        }
+        
+        // Texto "Has perdido en manos de Evil Somoza" en rojo y dos líneas
+        ctx.fillStyle = '#ff0000'
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 4
+        ctx.font = 'bold 28px Arial'
         ctx.textAlign = 'center'
-        ctx.fillText('Game Over', canvas.width / 2, 200)
-        ctx.font = '24px Arial'
-        ctx.fillText(`Score: ${gameStateRef.current.score}`, canvas.width / 2, 260)
-        ctx.fillText(`Best: ${bestScore}`, canvas.width / 2, 310)
+        ctx.strokeText('Has perdido en manos de', canvas.width / 2, 370)
+        ctx.fillText('Has perdido en manos de', canvas.width / 2, 370)
+        ctx.strokeText('Evil Somoza', canvas.width / 2, 410)
+        ctx.fillText('Evil Somoza', canvas.width / 2, 410)
+        
+        // Score y Best
+        ctx.fillStyle = '#fff'
+        ctx.font = 'bold 24px Arial'
+        ctx.lineWidth = 2
+        ctx.strokeText(`Score: ${gameStateRef.current.score}`, canvas.width / 2, 450)
+        ctx.fillText(`Score: ${gameStateRef.current.score}`, canvas.width / 2, 450)
+        ctx.strokeText(`Best: ${bestScore}`, canvas.width / 2, 490)
+        ctx.fillText(`Best: ${bestScore}`, canvas.width / 2, 490)
+        
+        // Tap to restart
         ctx.font = '18px Arial'
-        ctx.fillText('Tap to restart', canvas.width / 2, 370)
+        ctx.strokeText('Tap to restart', canvas.width / 2, 530)
+        ctx.fillText('Tap to restart', canvas.width / 2, 530)
       }
 
       animationId = requestAnimationFrame(animate)
@@ -253,7 +282,7 @@ export default function FlappyBird() {
     return () => {
       cancelAnimationFrame(animationId)
     }
-  }, [gameState, birdImage, pipeImage, backgroundImage, bestScore, menuOpacity, countdown])
+  }, [gameState, birdImage, pipeImage, backgroundImage, evilSomozaImage, bestScore, menuOpacity, countdown])
 
   useEffect(() => {
     const canvas = canvasRef.current
