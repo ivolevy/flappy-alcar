@@ -375,37 +375,12 @@ export default function FlappyBird() {
   return (
     <main className="flex items-center justify-center min-h-screen bg-gray-900">
       <div className="flex flex-col items-center gap-4">
-        <div className="relative">
-          {/* Texto arriba */}
-          <p className="absolute -top-8 left-1/2 -translate-x-1/2 text-white text-sm font-semibold whitespace-nowrap">
-            faure se copió con chatGPT
-          </p>
-          
-          <div className="flex items-center gap-4">
-            {/* Texto izquierda */}
-            <p className="text-white text-sm font-semibold whitespace-nowrap">
-              A marosek le gustan maduros
-            </p>
-            
-            {/* Canvas del juego */}
-            <canvas
-              ref={canvasRef}
-              width={400}
-              height={600}
-              className="border-4 border-white shadow-2xl cursor-pointer bg-blue-200"
-            />
-            
-            {/* Texto derecha */}
-            <p className="text-white text-sm font-semibold whitespace-nowrap">
-              Iñaki te vendiste, ya no sos amigo
-            </p>
-          </div>
-          
-          {/* Texto abajo */}
-          <p className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-white text-sm font-semibold whitespace-nowrap">
-            santi viñas compadre, hector alcar es tu padre
-          </p>
-        </div>
+        <canvas
+          ref={canvasRef}
+          width={400}
+          height={600}
+          className="border-4 border-white shadow-2xl cursor-pointer bg-blue-200"
+        />
       </div>
     </main>
   )
