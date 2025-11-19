@@ -2,6 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+const BASE_GRAVITY = 0.4
+const BASE_FLAP_STRENGTH = -8
+const PIPE_WIDTH = 80
+const BASE_PIPE_GAP = 160
+const MIN_PIPE_GAP = 120
+const BASE_PIPE_SPEED = 3
+const MAX_PIPE_SPEED = 5
+const PIPE_SPAWN_RATE = 110
+const BIRD_SIZE = 40
+const BIRD_X = 60
+
 export default function FlappyBird() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameOver'>('menu')
@@ -13,7 +24,7 @@ export default function FlappyBird() {
   const gameStateRef = useRef({
     birdY: 200,
     birdVelocity: 0,
-    pipes: [] as Array<{ x: number; gapY: number; scored: boolean }>,
+    pipes: [] as Array<{ x: number; gapY: number; gapSize: number; scored: boolean }>,
     score: 0,
     isPlaying: false,
   })
@@ -55,15 +66,6 @@ export default function FlappyBird() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const GRAVITY = 0.4
-    const FLAP_STRENGTH = -8
-    const PIPE_WIDTH = 80
-    const PIPE_GAP = 160
-    const PIPE_SPEED = 3
-    const PIPE_SPAWN_RATE = 110
-    const BIRD_SIZE = 40
-    const BIRD_X = 60
-
     let frameCount = 0
     let pipeSpawnCounter = 0
     let animationId: number
@@ -80,6 +82,14 @@ export default function FlappyBird() {
     }
 
     const animate = () => {
+      const difficultyLevel = Math.min(gameStateRef.current.score, 20)
+      const difficultyRatio = difficultyLevel / 20
+      const currentPipeGap =
+        BASE_PIPE_GAP - difficultyRatio * (BASE_PIPE_GAP - MIN_PIPE_GAP)
+      const currentPipeSpeed =
+        BASE_PIPE_SPEED + difficultyRatio * (MAX_PIPE_SPEED - BASE_PIPE_SPEED)
+      const currentGravity = BASE_GRAVITY + difficultyRatio * 0.1
+
       // Aplicar blur al fondo solo en el menú
       if (gameState === 'menu') {
         ctx.filter = 'blur(8px)'
@@ -94,23 +104,34 @@ export default function FlappyBird() {
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       if (gameState === 'playing' && countdown === null) {
-        gameStateRef.current.birdVelocity += GRAVITY
+        gameStateRef.current.birdVelocity += currentGravity
         gameStateRef.current.birdY += gameStateRef.current.birdVelocity
 
         pipeSpawnCounter++
         if (pipeSpawnCounter > PIPE_SPAWN_RATE) {
           const minGapY = 60
-          const maxGapY = canvas.height - PIPE_GAP - 60
+          const maxGapY = canvas.height - currentPipeGap - 60
           const gapY = Math.random() * (maxGapY - minGapY) + minGapY
-          gameStateRef.current.pipes.push({ x: canvas.width, gapY, scored: false })
+          gameStateRef.current.pipes.push({
+            x: canvas.width,
+            gapY,
+            gapSize: currentPipeGap,
+            scored: false,
+          })
           pipeSpawnCounter = 0
         }
 
         gameStateRef.current.pipes = gameStateRef.current.pipes.filter((pipe) => {
-          pipe.x -= PIPE_SPEED
+          pipe.x -= currentPipeSpeed
 
           drawTiledImage(pipeImage, pipe.x, 0, PIPE_WIDTH, pipe.gapY)
-          drawTiledImage(pipeImage, pipe.x, pipe.gapY + PIPE_GAP, PIPE_WIDTH, canvas.height - pipe.gapY - PIPE_GAP)
+          drawTiledImage(
+            pipeImage,
+            pipe.x,
+            pipe.gapY + pipe.gapSize,
+            PIPE_WIDTH,
+            canvas.height - pipe.gapY - pipe.gapSize,
+          )
 
           const birdRight = BIRD_X + BIRD_SIZE
           const birdBottom = gameStateRef.current.birdY + BIRD_SIZE
@@ -118,7 +139,7 @@ export default function FlappyBird() {
           if (birdRight > pipe.x && BIRD_X < pipe.x + PIPE_WIDTH) {
             if (
               gameStateRef.current.birdY < pipe.gapY ||
-              birdBottom > pipe.gapY + PIPE_GAP
+              birdBottom > pipe.gapY + pipe.gapSize
             ) {
               setGameState('gameOver')
               const newBest = Math.max(bestScore, gameStateRef.current.score)
@@ -318,7 +339,7 @@ export default function FlappyBird() {
         }
         fadeOut()
       } else if (gameState === 'playing') {
-        gameStateRef.current.birdVelocity = -8
+        gameStateRef.current.birdVelocity = BASE_FLAP_STRENGTH
       } else if (gameState === 'gameOver') {
         // Reiniciar el juego directamente sin volver al menú
         gameStateRef.current.birdY = 200
