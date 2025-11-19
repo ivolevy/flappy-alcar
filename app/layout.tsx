@@ -10,6 +10,12 @@ export const metadata: Metadata = {
   title: 'Flappy Hector - Juego',
   description: 'Juega Flappy Bird con Hector',
   generator: 'v0.app',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
   icons: {
     icon: [
       {

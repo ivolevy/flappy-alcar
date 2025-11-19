@@ -6,6 +6,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Desactivar turbopack temporalmente si hay problemas
+  // Puedes activarlo con: npm run dev -- --turbo
 }
 
 export default nextConfig

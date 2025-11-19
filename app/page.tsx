@@ -37,8 +37,7 @@ export default function FlappyBird() {
     pipeImg.onload = () => setPipeImage(pipeImg)
 
     const bgImg = new Image()
-    bgImg.crossOrigin = 'anonymous'
-    bgImg.src = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1693788394090-rHm5nTXC09cix6HesGvQZzbqObvV3J.jpeg'
+    bgImg.src = '/archivo_002.jpeg'
     bgImg.onload = () => setBackgroundImage(bgImg)
 
     const evilImg = new Image()
@@ -56,11 +55,11 @@ export default function FlappyBird() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const GRAVITY = 0.5
-    const FLAP_STRENGTH = -9
+    const GRAVITY = 0.4
+    const FLAP_STRENGTH = -8
     const PIPE_WIDTH = 80
-    const PIPE_GAP = 140
-    const PIPE_SPEED = 4
+    const PIPE_GAP = 160
+    const PIPE_SPEED = 3
     const PIPE_SPAWN_RATE = 110
     const BIRD_SIZE = 40
     const BIRD_X = 60
@@ -91,7 +90,7 @@ export default function FlappyBird() {
       ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height)
       ctx.filter = 'none' // Resetear el filtro después de dibujar el fondo
       
-      ctx.fillStyle = 'rgba(135, 206, 235, 0.3)'
+      ctx.fillStyle = 'rgba(135, 206, 235, 0.6)'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       if (gameState === 'playing' && countdown === null) {
@@ -319,7 +318,7 @@ export default function FlappyBird() {
         }
         fadeOut()
       } else if (gameState === 'playing') {
-        gameStateRef.current.birdVelocity = -9
+        gameStateRef.current.birdVelocity = -8
       } else if (gameState === 'gameOver') {
         // Reiniciar el juego directamente sin volver al menú
         gameStateRef.current.birdY = 200
@@ -339,14 +338,39 @@ export default function FlappyBird() {
       }
     }
 
+    // Manejar eventos táctiles de forma optimizada para móviles
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault() // Prevenir scroll y zoom
+      handleFlap()
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault() // Prevenir comportamientos por defecto
+    }
+
+    // Prevenir zoom con doble toque
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+    }
+
+    // Prevenir selección de texto y otros comportamientos no deseados
+    canvas.style.touchAction = 'none'
+    canvas.style.userSelect = 'none'
+    canvas.style.webkitUserSelect = 'none'
+    canvas.style.setProperty('-webkit-touch-callout', 'none')
+
     canvas.addEventListener('click', handleFlap)
     window.addEventListener('keydown', handleKeyDown)
-    canvas.addEventListener('touchstart', handleFlap)
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
 
     return () => {
       canvas.removeEventListener('click', handleFlap)
       window.removeEventListener('keydown', handleKeyDown)
-      canvas.removeEventListener('touchstart', handleFlap)
+      canvas.removeEventListener('touchstart', handleTouchStart)
+      canvas.removeEventListener('touchend', handleTouchEnd)
+      canvas.removeEventListener('touchmove', handleTouchMove)
     }
   }, [gameState, menuOpacity, isFirstTime])
 
@@ -373,13 +397,19 @@ export default function FlappyBird() {
   }, [countdown])
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-gray-900">
+    <main className="flex items-center justify-center min-h-screen bg-gray-900 touch-none select-none" style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}>
       <div className="flex flex-col items-center gap-4">
         <canvas
           ref={canvasRef}
           width={400}
           height={600}
-          className="border-4 border-white shadow-2xl cursor-pointer bg-blue-200"
+          className="border-4 border-white shadow-2xl cursor-pointer bg-blue-200 touch-none select-none"
+          style={{ 
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none'
+          }}
         />
       </div>
     </main>
